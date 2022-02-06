@@ -21,7 +21,8 @@ $EnvConfigs = [
 
     'admin'             => 0b000,
     'adminloginpage'    => 0b010,
-    //'autoJumpFirstDisk' => 0b010,
+    '
+    ' => 0b010,
     'background'        => 0b011,
     'backgroundm'       => 0b011,
     'disableShowThumb'  => 0b010,
@@ -270,7 +271,7 @@ function main($path)
                 // return a json
                 return output(json_encode($files), 200, ['Content-Type' => 'application/json']);
             }
-            //if (getConfig('autoJumpFirstDisk')) return output('', 302, [ 'Location' => path_format($_SERVER['base_path'].'/'.$disktags[0].'/') ]);
+            if (getConfig('autoJumpFirstDisk')) return output('', 302, [ 'Location' => path_format($_SERVER['base_path'].'/'.$disktags[0].'/') ]);
         } else {
             $_SERVER['disktag'] = splitfirst( substr(path_format($path), 1), '/' )[0];
             //$pos = strpos($path, '/');
@@ -301,6 +302,35 @@ function main($path)
     $_SERVER['is_guestup_path'] = is_guestup_path($path);
     $_SERVER['ajax']=0;
     if (isset($_SERVER['HTTP_X_REQUESTED_WITH'])) if ($_SERVER['HTTP_X_REQUESTED_WITH']=='XMLHttpRequest') $_SERVER['ajax']=1;
+    
+    // Add disk
+    if (isset($_GET['AddDisk'])) {
+        if ($_GET['AddDisk']===true) {
+            $tmp = path_format($_SERVER['base_path'] . '/' . $path);
+            return output('Please visit <a href="' . $tmp . '">' . $tmp . '</a>.', 301, [ 'Location' => $tmp ]);
+        }
+        if ($_SERVER['admin']) {
+            if (!class_exists($_GET['AddDisk'])) require 'disk' . $slash . $_GET['AddDisk'] . '.php';
+                $drive = new $_GET['AddDisk']($_GET['disktag']);
+                return $drive->AddDisk();
+        } else {
+            $url = $_SERVER['PHP_SELF'];
+            /*if ($_GET) {
+                $tmp = null;
+                $tmp = '';
+                foreach ($_GET as $k => $v) {
+                    if ($k!='setup') {
+                        if ($v===true) $tmp .= '&' . $k;
+                        else $tmp .= '&' . $k . '=' . $v;
+                    }
+                }
+                $tmp = substr($tmp, 1);
+                if ($tmp!='') $url .= '?' . $tmp;
+            }*/
+            // not need GET adddisk, remove it
+            return output('<script>alert(\''.getconstStr('SetSecretsFirst').'\');</script>', 302, [ 'Location' => $url ]);
+        }
+    }
 
     if (!isreferhost()) return message('Must visit from designated host', 'NOT_ALLOWED', 403);
 
